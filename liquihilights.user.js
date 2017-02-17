@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Liquipedia upcoming hilights
 // @namespace    http://zachu.fi/
-// @updateURL    https://git.zachu.fi/Zachu/LiquiHilights/raw/master/liquihilights.js
-// @version      0.2
+// @updateURL    https://git.zachu.fi/Zachu/LiquiHilights/raw/master/liquihilights.user.js
+// @version      0.2.1
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia DotA2 front page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/dota2/Main_Page
