@@ -2,7 +2,7 @@
 // @name         LiquiHilights
 // @namespace    http://zachu.fi/
 // @updateURL    https://git.zachu.fi/Zachu/LiquiHilights/raw/master/liquihilights.user.js
-// @version      0.2.1
+// @version      0.3.0
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia main page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/*/Main_Page
