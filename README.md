@@ -1,7 +1,7 @@
 # LiquiHilights
 LiquiHilights is a [Tampermonkey](https://tampermonkey.net/) and [Greasemonkey](http://www.greasespot.net/) script for enhancing [Liquipedia](http://wiki.teamliquid.net/). The script is helping you not to miss any matches your favorite teams have coming up. Just star your favorite teams and let this script hilight upcoming matches right next to the header!
 
-Currently LiquiHilights works with Liquipedias [DotA2](http://wiki.teamliquid.net/dota2/Main_Page), [Overwatch](http://wiki.teamliquid.net/overwatch/Main_Page), and [Rocket League](http://wiki.teamliquid.net/rocketleague/Main_Page) wiki front pages.
+Currently LiquiHilights works with Liquipedias [Dota 2](http://wiki.teamliquid.net/dota2/Main_Page), [Overwatch](http://wiki.teamliquid.net/overwatch/Main_Page), and [Rocket League](http://wiki.teamliquid.net/rocketleague/Main_Page) wiki front pages.
 
 ## Installation
 
