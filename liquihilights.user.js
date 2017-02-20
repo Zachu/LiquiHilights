@@ -2,12 +2,14 @@
 // @name         LiquiHilights
 // @namespace    http://zachu.fi/
 // @updateURL    https://github.com/Zachu/LiquiHilights/raw/master/liquihilights.user.js
-// @version      0.3.0
+// @version      0.3.1
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia main page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/*/Main_Page
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @noframes
+// @require      https://code.jquery.com/jquery-3.1.1.slim.min.js
 // ==/UserScript==
 
 var supportedWikis = ['dota2', 'overwatch', 'rocketleague'],
