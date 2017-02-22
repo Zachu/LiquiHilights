@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         LiquiHilights
 // @namespace    http://zachu.fi/
-// @updateURL    https://github.com/Zachu/LiquiHilights/raw/master/liquihilights.user.js
-// @version      0.3.1
+// @downloadURL  https://github.com/Zachu/LiquiHilights/raw/master/liquihilights.user.js
+// @version      0.3.2
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia main page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/*/Main_Page
@@ -37,12 +37,8 @@ if (!(teams instanceof Array)) {
             delFavLink = $('<a href="#" class="delFav" title="Remove team from hilights"><span class="fa fa-fw fa-star"></span></a>'),
             addFavLink = $('<a href="#" class="addFav" title="Add team to hilights"><span class="fa fa-fw fa-star-o"></span></a>');
 
-        // Team is in hilight list
+        // Add favorite buttons
         if ($.inArray(href, teams) !== -1) {
-            if ($.inArray(table, hilight_matches) === -1) {
-                hilight_matches.push(table);
-            }
-
             if ($(e).find('a').length === 0) {
                 return;
             } else if ($(e).hasClass('team-left')) {
@@ -59,6 +55,10 @@ if (!(teams instanceof Array)) {
                 $(e).append(addFavLink.css('margin-left', '1em'));
             }
 
+        }
+        // Team is in hilight list
+        if ($.inArray(href, teams) !== -1 && $.inArray(table, hilight_matches) === -1) {
+            hilight_matches.push(table.clone());
         }
     });
 
