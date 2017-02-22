@@ -2,7 +2,7 @@
 // @name         LiquiHilights
 // @namespace    http://zachu.fi/
 // @downloadURL  https://github.com/Zachu/LiquiHilights/raw/master/liquihilights.user.js
-// @version      0.3.3
+// @version      0.3.4
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia main page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/*/Main_Page
@@ -41,8 +41,8 @@
     }
 
     function add_links(teamTd, teamHref) {
-        var add = '<a href="#" class="addFav" title="Add team to hilights"><span class="fa fa-fw fa-star-o"></span></a>',
-            del = '<a href="#" class="delFav" title="Remove team from hilights"><span class="fa fa-fw fa-star"></span></a>',
+        var add = '<a href="#" class="addFav" title="Add team to highlights"><span class="fa fa-fw fa-star-o"></span></a>',
+            del = '<a href="#" class="delFav" title="Remove team from highlights"><span class="fa fa-fw fa-star"></span></a>',
             link;
 
         if (is_favorited(teamHref)) {
@@ -71,7 +71,7 @@
         // Add stars/unstars
         add_links(teamTd, teamHref);
 
-        // Match should be hilighted
+        // Match should be highlighted
         if (is_favorited(teamHref) && !is_hilighted(matchTable)) {
             hilight_matches.push(matchTable);
         }
@@ -86,7 +86,7 @@
     $(".main-page-banner").children().wrapAll('<div class="col-md-6 col-md-pull-6">');
     $(".main-page-banner").addClass('row').prepend(
         $("<div>").addClass("col-md-6 col-md-push-6").append(
-            $("<h2>Upcoming hilights</h2>").css("margin-top", 0).css("padding-top", 0)
+            $("<h2>Upcoming highlights</h2>").css("margin-top", 0).css("padding-top", 0)
         ).append(matchesEl)
     );
 
