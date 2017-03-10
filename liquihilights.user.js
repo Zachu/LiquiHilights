@@ -15,11 +15,16 @@
 (function() {
     'use strict';
 
+    function log(message, level) {
+        console.log('Liquihilights [' + level+ ']: ' + message);
+    }
+
     // Initialize
     var supportedWikis = ['dota2', 'overwatch', 'rocketleague'],
         wiki = window.location.href.split('/')[3],
         teams_key = 'teams.' + wiki,
         teams = GM_getValue(teams_key),
+        favoriteTeams = teams,
         hilight_matches = [];
 
     if (!(teams instanceof Array)) {
@@ -27,7 +32,7 @@
     }
 
     if (supportedWikis.indexOf(wiki) === -1) {
-        console.log("Liquilights: " + wiki + " not supported. Supported wikis are " + supportedWikis.join(', '));
+        log(wiki + " not supported. Supported wikis are " + supportedWikis.join(', '), 'INFO');
         return;
     }
 
@@ -57,6 +62,101 @@
             $(teamTd).append($(link).css('margin-left', '1em'));
         }
     }
+
+    function get_matches() {
+        return document.querySelectorAll('.main-page-banner ~ .row .infobox_matches_content');
+    }
+
+    function get_match_teams(match) {
+        if (!(match instanceof Element)) {
+            log("Parameter passed as match doesn't look like a dom element",'ERROR');
+            return;
+        }
+
+        return match.querySelectorAll('.team-left, .team-right');
+    }
+
+    function get_team_url(team) {
+        if (!(team instanceof Element)) {
+            log("Parameter passed as team doesn't look like a dom element",'ERROR');
+            return;
+        }
+
+        return team.querySelector('a:not([href="#"])').getAttribute('href');
+    }
+
+    function is_favorited_team(team, favoriteTeams) {
+        var teamUrl = get_team_url(team);
+        return favoriteTeams.indexOf(teamUrl) !== -1;
+    }
+
+    function is_favorited_match(match, favoriteTeams) {
+        var starred = false;
+        get_match_teams(match).forEach(function(team) {
+            if (is_favorited_team(team, favoriteTeams)) {
+                starred = true;
+            }
+        });
+
+        return starred;
+    }
+
+    function get_favorite_matches(favoriteTeams) {
+        var matches = [];
+        get_matches().forEach(function(match) {
+            if (is_favorited_match(match, favoriteTeams)) {
+                matches.push(match);
+            }
+        });
+
+        return matches;
+    }
+
+    function add_star(team, favoriteTeams) {
+        var position = '',
+            aClass = '',
+            aTitle = '',
+            sClass = '';
+
+        if (is_favorited_team(team, favoriteTeams)) {
+            aClass = 'delFav';
+            aTitle = 'Remove team from highlights';
+            sClass = 'fa-star';
+            if (team.classList.contains('team-left')) {
+                position = 'afterbegin';
+            } else {
+                position = 'beforeend';
+            }
+        } else {
+            aClass = 'addFav';
+            aTitle = 'Add team to highlights';
+            sClass = 'fa-star-o';
+            if (team.classList.contains('team-left')) {
+                position = 'afterbegin';
+            } else {
+                position = 'beforeend';
+            }
+        }
+
+        team.insertAdjacentHTML(position,'<a href="#" class="' + aClass + '" style="margin:1em" title="' + aTitle + '"><span class="fa fa-fw '+sClass+'"></span></a>');
+    }
+
+    // Add stars & unstars
+    get_matches().forEach(function(match) {
+        get_match_teams(match).forEach(function(team) {
+            add_star(team, favoriteTeams);
+        });
+    });
+
+    document.querySelectorAll('.addFav').forEach(function(el){
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log(["Clicked addStar", e, this]);
+        });
+    });
+    
+    console.log(get_favorite_matches(favoriteTeams));
+    return;
 
     // Find teams in page. This is the easiest way I could figure to get all match rowstables
     $(".main-page-banner ~ .row .team-left, .main-page-banner ~ .row .team-right").each(function(i, teamTd) {
