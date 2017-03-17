@@ -2,34 +2,25 @@
 // @name         LiquiHilights
 // @namespace    http://zachu.fi/
 // @downloadURL  https://github.com/Zachu/LiquiHilights/raw/master/liquihilights.user.js
-// @version      0.3.4
+// @version      0.4.0
 // @description  Adds upcoming matches of selected teams to the header of Liquipedia main page
 // @author       Jani Korhonen <zachu@thegroup.fi>
 // @match        http://wiki.teamliquid.net/*/Main_Page
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @noframes
-// @require      https://code.jquery.com/jquery-3.1.1.slim.min.js
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    function log(message, level) {
-        console.log('Liquihilights [' + level+ ']: ' + message);
-    }
-
     // Initialize
     var supportedWikis = ['dota2', 'overwatch', 'rocketleague'],
         wiki = window.location.href.split('/')[3],
         teams_key = 'teams.' + wiki,
-        teams = GM_getValue(teams_key),
-        favoriteTeams = teams,
-        hilight_matches = [];
+        starredTeams = false,
+        logLevels = [];
 
-    if (!(teams instanceof Array)) {
-        teams = [];
-    }
 
     if (supportedWikis.indexOf(wiki) === -1) {
         log(wiki + " not supported. Supported wikis are " + supportedWikis.join(', '), 'INFO');
@@ -37,29 +28,9 @@
     }
 
     // Define functions
-    function is_favorited(teamHref) {
-        return teams.indexOf(teamHref) !== -1;
-    }
-
-    function is_hilighted(matchTable) {
-        return hilight_matches.indexOf(matchTable) !== -1;
-    }
-
-    function add_links(teamTd, teamHref) {
-        var add = '<a href="#" class="addFav" title="Add team to highlights"><span class="fa fa-fw fa-star-o"></span></a>',
-            del = '<a href="#" class="delFav" title="Remove team from highlights"><span class="fa fa-fw fa-star"></span></a>',
-            link;
-
-        if (is_favorited(teamHref)) {
-            link = del;
-        } else {
-            link = add;
-        }
-
-        if ($(teamTd).hasClass('team-left')) {
-            $(teamTd).prepend($(link).css('margin-right', '1em'));
-        } else {
-            $(teamTd).append($(link).css('margin-left', '1em'));
+    function log(message, level) {
+        if (logLevels.indexOf(level) !== -1) {
+            console.log('[' + level+ '] Liquihilights: ' + message);
         }
     }
 
@@ -79,137 +50,211 @@
     function get_team_url(team) {
         if (!(team instanceof Element)) {
             log("Parameter passed as team doesn't look like a dom element",'ERROR');
+            console.log(team);
             return;
         }
 
-        return team.querySelector('a:not([href="#"])').getAttribute('href');
+        var a = team.querySelector('a:not([href="#"])');
+        if (!(a instanceof Element)) {
+            return false;
+        }
+
+        return a.getAttribute('href');
     }
 
-    function is_favorited_team(team, favoriteTeams) {
-        var teamUrl = get_team_url(team);
-        return favoriteTeams.indexOf(teamUrl) !== -1;
+    function is_starred_team(team) {
+        var teamUrl = get_team_url(team),
+            starredTeams = get_starred_teams();
+
+        return starredTeams.indexOf(teamUrl) !== -1;
     }
 
-    function is_favorited_match(match, favoriteTeams) {
-        var starred = false;
-        get_match_teams(match).forEach(function(team) {
-            if (is_favorited_team(team, favoriteTeams)) {
+    function is_starred_match(match) {
+        var starred = false,
+            starredTeams = get_starred_teams(),
+            teams = get_match_teams(match);
+
+        for (var i=0;i<teams.length;i++) {
+            var team = teams[i];
+            if (is_starred_team(team, starredTeams)) {
                 starred = true;
             }
-        });
+        }
 
         return starred;
     }
 
-    function get_favorite_matches(favoriteTeams) {
-        var matches = [];
-        get_matches().forEach(function(match) {
-            if (is_favorited_match(match, favoriteTeams)) {
-                matches.push(match);
-            }
-        });
+    function get_starred_matches() {
+        var starredMatches = [],
+            starredTeams = get_starred_teams(),
+            matches = get_matches();
 
-        return matches;
-    }
-
-    function add_star(team, favoriteTeams) {
-        var position = '',
-            aClass = '',
-            aTitle = '',
-            sClass = '';
-
-        if (is_favorited_team(team, favoriteTeams)) {
-            aClass = 'delFav';
-            aTitle = 'Remove team from highlights';
-            sClass = 'fa-star';
-            if (team.classList.contains('team-left')) {
-                position = 'afterbegin';
-            } else {
-                position = 'beforeend';
-            }
-        } else {
-            aClass = 'addFav';
-            aTitle = 'Add team to highlights';
-            sClass = 'fa-star-o';
-            if (team.classList.contains('team-left')) {
-                position = 'afterbegin';
-            } else {
-                position = 'beforeend';
+        for (var i=0;i<matches.length;i++) {
+            var match = matches[i];
+            if (is_starred_match(match, starredTeams)) {
+                starredMatches.push(match);
             }
         }
 
-        team.insertAdjacentHTML(position,'<a href="#" class="' + aClass + '" style="margin:1em" title="' + aTitle + '"><span class="fa fa-fw '+sClass+'"></span></a>');
+        return starredMatches;
     }
 
-    // Add stars & unstars
-    get_matches().forEach(function(match) {
-        get_match_teams(match).forEach(function(team) {
-            add_star(team, favoriteTeams);
-        });
-    });
+    function add_star(team) {
+        var position = '',
+            starredTeams = get_starred_teams(),
+            template = document.createElement('template'),
+            starEl;
 
-    document.querySelectorAll('.addFav').forEach(function(el){
-        el.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log(["Clicked addStar", e, this]);
-        });
-    });
-    
-    console.log(get_favorite_matches(favoriteTeams));
-    return;
+        var oldStar = team.querySelector('.liquiStar');
+        if (oldStar instanceof Element) {
+            oldStar.remove();
+        }
 
-    // Find teams in page. This is the easiest way I could figure to get all match rowstables
-    $(".main-page-banner ~ .row .team-left, .main-page-banner ~ .row .team-right").each(function(i, teamTd) {
-        var matchTable = $(teamTd).closest("table"),
-            teamHref = $(teamTd).find('a:not([href="#"])').attr('href');
+        if (is_starred_team(team, starredTeams)) {
+            // delStar
+            if (team.classList.contains('team-left')) {
+                position = 'afterbegin';
+            } else {
+                position = 'beforeend';
+            }
 
-        if (typeof teamHref === 'undefined') {
-            // Team is some sort of TBA or something. Skip
+            // Add star element
+            template.innerHTML = '<a href="#" class="delStar liquiStar" style="margin:1em" title="Remove team from highlights"><span class="fa fa-fw fa-star"></span></a>';
+            starEl = template.content.firstChild;
+            team.insertAdjacentElement(position,starEl);
+
+            // Add listener
+            starEl.addEventListener('click', function(e) {
+                var team = this.closest('td');
+                del_starred_team(team);
+                refresh_stars();
+                refresh_banner();
+                e.preventDefault();
+            });
+        } else if (get_team_url(team, starredTeams) !== false) {
+            // addStar
+            if (team.classList.contains('team-left')) {
+                position = 'afterbegin';
+            } else {
+                position = 'beforeend';
+            }
+
+            // Add star element
+            template.innerHTML = '<a href="#" class="addStar liquiStar" style="margin:1em" title="Add team to highlights"><span class="fa fa-fw fa-star-o"></span></a>';
+            starEl = template.content.firstChild;
+            team.insertAdjacentElement(position,starEl);
+
+            // Add listener
+            starEl.addEventListener('click', function(e) {
+                var team = this.closest('td');
+                add_starred_team(team);
+                refresh_stars();
+                refresh_banner();
+                e.preventDefault();
+            });
+        } else {
+            log("Team "+team.querySelector('.team-template-text').innerText+" doesn't seem to have a link. Skipping the team",'DEBUG');
             return;
         }
+    }
 
-        // Add stars/unstars
-        add_links(teamTd, teamHref);
+    function add_starred_team(team) {
+        var starredTeams = get_starred_teams();
 
-        // Match should be highlighted
-        if (is_favorited(teamHref) && !is_hilighted(matchTable)) {
-            hilight_matches.push(matchTable);
+        if (!is_starred_team(team)) {
+            starredTeams.push(get_team_url(team));
+            save_starred_teams(starredTeams);
+            return true;
         }
-    });
 
-    // Add matches to header
-    var matchesEl = $('<div class="liquihilights">');
-    hilight_matches.forEach(function(matchTable) {
-        matchesEl.append(matchTable.clone());
-    });
-
-    $(".main-page-banner").children().wrapAll('<div class="col-md-6 col-md-pull-6">');
-    $(".main-page-banner").addClass('row').prepend(
-        $("<div>").addClass("col-md-6 col-md-push-6").append(
-            $("<h2>Upcoming highlights</h2>").css("margin-top", 0).css("padding-top", 0)
-        ).append(matchesEl)
-    );
-
-    $('.addFav').on('click', function(e) {
-        e.preventDefault();
-        var href = $(this).closest('td').find('a:not([href="#"])').attr('href');
-
-        if (!is_favorited(href)) {
-            teams.push(href);
-            GM_setValue(teams_key, teams);
-            $(this).find('span.fa-star-o').removeClass('fa-star-o').addClass('fa-star');
-        }
         return false;
-    });
+    }
 
-    $('.delFav').on('click', function(e) {
-        e.preventDefault();
-        var href = $(this).closest('td').find('a:not([href="#"])').attr('href');
-        if (is_favorited(href)) {
-            teams.splice(teams.indexOf(href), 1);
-            GM_setValue(teams_key, teams);
-            $(this).find('span.fa-star').removeClass('fa-star').addClass('fa-star-o');
+    function del_starred_team(team) {
+        var starredTeams = get_starred_teams();
+
+        if (is_starred_team(team)) {
+            starredTeams.splice(starredTeams.indexOf(get_team_url(team)), 1);
+            save_starred_teams(starredTeams);
+            return true;
         }
+
         return false;
-    });
+    }
+
+    function get_starred_teams() {
+        if (starredTeams === false) {
+            starredTeams = GM_getValue(teams_key);
+        }
+        if (!(starredTeams instanceof Array)) {
+            starredTeams = [];
+        }
+
+        return starredTeams;
+    }
+
+    function save_starred_teams(teams) {
+        starredTeams = teams;
+        GM_setValue(teams_key, teams);
+    }
+
+    function refresh_stars() {
+        var matches = get_matches();
+
+        for(var i=0;i<matches.length;i++) {
+            var match = matches[i],
+                teams = get_match_teams(match);
+
+            for (var j=0;j<teams.length;j++) {
+                var team = teams[j];
+                add_star(team);
+            }
+        }
+    }
+
+    function get_banner_matches() {
+        return document.querySelectorAll('.liquiBanner .infobox_matches_content');
+    }
+
+    function prepare_banner() {
+        var banner = document.querySelector('.main-page-banner');
+        banner.classList.add('row');
+        banner.innerHTML = '<div class="col-md-6 col-md-pull-6">' + banner.innerHTML + '</div>';
+        banner.insertAdjacentHTML('afterbegin','<div class="col-md-6 col-md-push-6 liquiBanner"></div>');
+    }
+
+    function refresh_banner() {
+        var banner = document.querySelector('.liquiBanner'),
+            starredMatches = get_starred_matches();
+
+        // Clear the banner of old matches
+        while (banner.firstChild) {
+            banner.removeChild(banner.firstChild);
+        }
+
+        // Add all matches to the banner
+        for (var i=0;i<starredMatches.length;i++) {
+            var starredMatch = starredMatches[i];
+            banner.insertAdjacentElement('beforeend', starredMatch.cloneNode(true));
+        }
+
+        banner.insertAdjacentHTML('afterbegin','<h2 style="margin-top:0;padding-top:0;">Upcoming highlights</h2>');
+
+        // Refresh banner star listeners
+        var bannerMatches = get_banner_matches();
+        for (var j=0;j<bannerMatches.length;j++) {
+            var bannerMatch = bannerMatches[j],
+                teams = get_match_teams(bannerMatch);
+
+            for (var k=0;k<teams.length;k++) {
+                var team = teams[k];
+                add_star(team);
+            }
+        }
+    }
+
+    // Main
+    prepare_banner();
+    refresh_stars();
+    refresh_banner();
 })();
