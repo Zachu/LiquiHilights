@@ -17,4 +17,4 @@ Just click [this link](https://github.com/Zachu/LiquiHilights/raw/master/liquihi
 
 1. Head over to your favorite Liquipedia wiki.
 2. On the "Upcoming Matches"-section you should see stars next to all teams. Star something!
-3. Refresh the page, and you should see all upcoming matches of your starred teams right on top of the page.
+3. Look on top of the page! You should see all upcoming matches of your starred teams.
